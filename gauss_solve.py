@@ -31,6 +31,7 @@ def unpack(A):
     # Fill U with the upper triangular part of A (on and above diagonal)
     for i in range(n):
         for j in range(n):
+            print(f"Processing: A[{i}][{j}] = {A[i][j]}")
             if i > j:
                 L[i][j] = A[i][j]  # Values below diagonal in A are for L
             else:
@@ -117,13 +118,19 @@ def lu_python(A):
 
     return unpack(A)
 
+def swap_rows(matrix, row1, row2):
+    """ Swap two rows in a NumPy array """
+    temp = np.copy(matrix[row1, :])
+    matrix[row1, :] = matrix[row2, :]
+    matrix[row2, :] = temp
+    
 def plu_python(A):
     n = len(A)
     
     # Initialize P as an identity matrix
     P = np.eye(n)
     
-    # Initialize L to a zero matrix and U to a copy of A
+    # Initialize U to a copy of A
     U = np.copy(A)
     
     # LU Decomposition with partial pivoting
@@ -136,13 +143,10 @@ def plu_python(A):
                 max_val = abs(U[i][k])
                 pivot_row = i
         
-        # Step 6: Swap rows in U and P if needed
+        # Step 6: Swap rows in U and P if needed (use manual swap function)
         if pivot_row != k:
-            # Swap rows in U
-            U[[k, pivot_row], :] = U[[pivot_row, k], :]
-            
-            # Swap rows in P (same as U)
-            P[[k, pivot_row], :] = P[[pivot_row, k], :]
+            swap_rows(U, k, pivot_row)
+            swap_rows(P, k, pivot_row)
         
         # Step 9: Perform elimination for rows below the pivot row
         for i in range(k + 1, n):
