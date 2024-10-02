@@ -123,42 +123,40 @@ def swap_rows(matrix, row1, row2):
     matrix[[row1, row2], :] = matrix[[row2, row1], :]
 
 def plu_python(A):
+    """PA=LU decomposition in pure Python."""
     n = len(A)
-    
-    # Initialize P as an identity matrix
-    P = np.eye(n)
-    
-    # Initialize U to a copy of A
-    U = np.copy(A)
-    
-    # LU Decomposition with partial pivoting
+    P = list(range(n))
+    L = [[0.0] * n for _ in range(n)]
+    U = [row[:] for row in A]  # Make a copy of A
+
     for k in range(n - 1):
-        # Step 5: Find the pivot element (largest absolute value in column k)
-        pivot_row = k
-        max_val = abs(U[k][k])
-        for i in range(k + 1, n):
-            if abs(U[i][k]) > max_val:
-                max_val = abs(U[i][k])
-                pivot_row = i
-        
-        # Step 6: Swap rows in U and P if needed
+        # Find the pivot element
+        pivot_row = max(range(k, n), key=lambda i: abs(U[i][k]))
+        if U[pivot_row][k] == 0:
+            raise ValueError("Matrix is singular and cannot be decomposed.")
+
+        # Swap rows in U, P, and L (only columns 1 to k - 1)
         if pivot_row != k:
-            swap_rows(U, k, pivot_row)
-            swap_rows(P, k, pivot_row)
-        
-        # Step 9: Perform elimination for rows below the pivot row
+            # Swap rows in U
+            U[k], U[pivot_row] = U[pivot_row], U[k]
+            # Swap entries in permutation vector P
+            P[k], P[pivot_row] = P[pivot_row], P[k]
+            # Swap rows in L (only columns 0 to k - 1)
+            for j in range(k):
+                L[k][j], L[pivot_row][j] = L[pivot_row][j], L[k][j]
+
+        # Eliminate below the pivot
         for i in range(k + 1, n):
-            # Step 10: Compute the multiplier
-            U[i][k] = U[i][k] / U[k][k]
-            
-            # Step 11-13: Update the matrix U
-            U[i, k+1:n] = U[i, k+1:n] - U[i][k] * U[k, k+1:n]
-    
-    # Convert U to a list of lists at the last moment before passing to unpack
-    L, U = unpack(U.tolist())
-    
-    # Return the permutation matrix P (as a 2D matrix), and matrices L and U
-    return P.tolist(), L, U
+            L[i][k] = U[i][k] / U[k][k]  # Store the multiplier in L
+            for j in range(k, n):
+                U[i][j] -= L[i][k] * U[k][j]
+
+    # Set the diagonal of L to 1
+    for i in range(n):
+        L[i][i] = 1.0
+
+    return P, L, U
+
 
 
 def lu(A, use_c=False):
