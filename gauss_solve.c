@@ -8,6 +8,8 @@
 *
 *----------------------------------------------------------------*/
 #include "gauss_solve.h"
+#include <math.h>
+#include <stdio.h>
 
 void gauss_solve_in_place(const int n, double A[n][n], double b[n])
 {
@@ -66,3 +68,51 @@ void lu_in_place_reconstruct(int n, double A[n][n])
     }
   }
 }
+
+void plu(int n, double A[n][n], int P[n]) {
+    // Initialize P to the identity permutation
+    for (int i = 0; i < n; i++) {
+        P[i] = i; // Permutation vector (P)
+    }
+
+    // LU Decomposition with partial pivoting (in-place)
+    for (int k = 0; k < n - 1; k++) {
+        // Step 5: Find the pivot element (largest absolute value in column k)
+        int pivot_row = k;
+        double max_val = fabs(A[k][k]);
+        for (int i = k + 1; i < n; i++) {
+            if (fabs(A[i][k]) > max_val) {
+                max_val = fabs(A[i][k]);
+                pivot_row = i;
+            }
+        }
+
+        // Step 6: Swap rows in A if needed
+        if (pivot_row != k) {
+            // Swap rows in A
+            for (int j = 0; j < n; j++) {
+                SWAP(A[k][j], A[pivot_row][j], double);
+            }
+
+            // Step 7: Swap rows in P (which tracks row permutations)
+            SWAP(P[k], P[pivot_row], int);
+        }
+
+        // Step 9: Perform elimination for rows below the pivot row
+        for (int i = k + 1; i < n; i++) {
+            // Step 10: Compute the multiplier (store in A below the diagonal for L)
+            if (A[k][k] != 0) {
+                A[i][k] = A[i][k] / A[k][k];  // Store multiplier in A (L part)
+            } else {
+                A[i][k] = 0; // Avoid division by zero
+            }
+
+            // Step 11-13: Update the matrix A (U part)
+            for (int j = k + 1; j < n; j++) {
+                A[i][j] = A[i][j] - A[i][k] * A[k][j];  // Modify A (U part)
+                
+            }
+        }
+    }
+}
+

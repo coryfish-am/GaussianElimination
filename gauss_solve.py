@@ -10,19 +10,34 @@
 # A Python wrapper module around the C library libgauss.so
 
 import ctypes
+import numpy as np
 
 gauss_library_path = './libgauss.so'
 
+def P(A):
+    n = len(A)  # Assuming `a` is a square matrix
+    identity = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
+    return identity
+    
 def unpack(A):
     """ Extract L and U parts from A, fill with 0's and 1's """
     n = len(A)
-    L = [[A[i][j] for j in range(i)] + [1] + [0 for j in range(i+1, n)]
-         for i in range(n)]
+    
+    # Create L and U matrices
+    L = [[0 if j != i else 1 for j in range(n)] for i in range(n)]
+    U = [[0 for j in range(n)] for i in range(n)]
 
-    U = [[0 for j in range(i)] + [A[i][j] for j in range(i, n)]
-         for i in range(n)]
+    # Fill L with the lower triangular part of A (below diagonal)
+    # Fill U with the upper triangular part of A (on and above diagonal)
+    for i in range(n):
+        for j in range(n):
+            if i > j:
+                L[i][j] = A[i][j]  # Values below diagonal in A are for L
+            else:
+                U[i][j] = A[i][j]  # Values on and above diagonal in A are for U
 
     return L, U
+
 
 def lu_c(A):
     """ Accepts a list of lists A of floats and
@@ -53,6 +68,42 @@ def lu_c(A):
     # Extract L and U parts from A, fill with 0's and 1's
     return unpack(modified_array_2d)
 
+def plu_c(A):
+    """ Accepts a list of lists A of floats and
+    it returns (L, U) - the LU-decomposition as a tuple.
+    """
+    # Load the shared library
+    lib = ctypes.CDLL(gauss_library_path)
+
+    # Create a 2D array in Python and flatten it
+    n = len(A)
+    flat_array_2d = [item for row in A for item in row]
+
+    # Create the identity permutation array P as a 1D array
+    P_array = [i for i in range(n)]
+
+    # Convert to ctypes array
+    c_array_2d = (ctypes.c_double * len(flat_array_2d))(*flat_array_2d)
+    c_P_array = (ctypes.c_int * n)(*P_array)
+
+    # Define the function signature (accepting n, A, and P)
+    lib.plu.argtypes = (ctypes.c_int, ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_int))
+
+    # Call the C function (pass n, A, and P)
+    lib.plu(n, c_array_2d, c_P_array)
+
+    # Convert back to a 2D Python list of lists
+    modified_array_2d = [
+        [c_array_2d[i * n + j] for j in range(n)]
+        for i in range(n)
+    ]
+    L,U = unpack(modified_array_2d)
+    # Convert the 1D permutation array back to a permutation matrix
+    permutation_matrix = [[1 if c_P_array[i] == j else 0 for j in range(n)] for i in range(n)]
+
+    # Extract L and U parts from A, fill with 0's and 1's
+    return permutation_matrix, L, U
+
 def lu_python(A):
     n = len(A)
     for k in range(n):
@@ -66,12 +117,59 @@ def lu_python(A):
 
     return unpack(A)
 
+def plu_python(A):
+    n = len(A)
+    
+    # Initialize P as an identity matrix
+    P = np.eye(n)
+    
+    # Initialize L to a zero matrix and U to a copy of A
+    U = np.copy(A)
+    
+    # LU Decomposition with partial pivoting
+    for k in range(n - 1):
+        # Step 5: Find the pivot element (largest absolute value in column k)
+        pivot_row = k
+        max_val = abs(U[k][k])
+        for i in range(k + 1, n):
+            if abs(U[i][k]) > max_val:
+                max_val = abs(U[i][k])
+                pivot_row = i
+        
+        # Step 6: Swap rows in U and P if needed
+        if pivot_row != k:
+            # Swap rows in U
+            U[[k, pivot_row]] = U[[pivot_row, k]]
+            
+            # Swap rows in P (same as U)
+            P[[k, pivot_row]] = P[[pivot_row, k]]
+        
+        # Step 9: Perform elimination for rows below the pivot row
+        for i in range(k + 1, n):
+            # Step 10: Compute the multiplier
+            U[i][k] = U[i][k] / U[k][k]
+            
+            # Step 11-13: Update the matrix U
+            U[i, k+1:n] = U[i, k+1:n] - U[i][k] * U[k, k+1:n]
+    
+    # Use the provided unpack function to extract L and U
+    L, U = unpack(U.tolist())
+    
+    # Return the permutation matrix P (as a 2D matrix), and matrices L and U
+    return P.tolist(), L, U
+
 
 def lu(A, use_c=False):
     if use_c:
         return lu_c(A)
     else:
         return lu_python(A)
+
+def plu(A, use_c=False):
+    if use_c:
+        return plu_c(A)
+    else:
+        return plu_python(A)
 
 
 
@@ -94,5 +192,17 @@ if __name__ == "__main__":
     A = get_A()
 
     L, U = lu(A, use_c=True)
+    print(L)
+    print(U)
+    
+    A = get_A()
+    P, L, U = plu(A, use_c=False)
+    print(P)
+    print(L)
+    print(U)
+    
+    A = get_A()
+    P, L, U = plu(A, use_c=True)
+    print(P)
     print(L)
     print(U)
