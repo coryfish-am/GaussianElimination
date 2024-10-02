@@ -139,10 +139,10 @@ def plu_python(A):
         # Step 6: Swap rows in U and P if needed
         if pivot_row != k:
             # Swap rows in U
-            U[[k, pivot_row]] = U[[pivot_row, k]]
+            U[[k, pivot_row], :] = U[[pivot_row, k], :]
             
             # Swap rows in P (same as U)
-            P[[k, pivot_row]] = P[[pivot_row, k]]
+            P[[k, pivot_row], :] = P[[pivot_row, k], :]
         
         # Step 9: Perform elimination for rows below the pivot row
         for i in range(k + 1, n):
