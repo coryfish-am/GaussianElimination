@@ -100,9 +100,9 @@ def plu_c(A):
     L,U = unpack(modified_array_2d)
     # Convert the 1D permutation array back to a permutation matrix
     permutation_matrix = [[1 if c_P_array[i] == j else 0 for j in range(n)] for i in range(n)]
-
+    permutation_vector = [list(row).index(1) for row in P]
     # Extract L and U parts from A, fill with 0's and 1's
-    return permutation_matrix, L, U
+    return permutation_vector, L, U
 
 def lu_python(A):
     n = len(A)
@@ -177,7 +177,16 @@ if __name__ == "__main__":
 
     def get_A():
         """ Make a test matrix """
-        A = [[2.0, 3.0, -1.0],
+        B = [[2.0, 3.0, -1.0],
+             [4.0, 1.0, 2.0],
+             [-2.0, 7.0, 2.0]]
+        A = [[-2.0, 3.0, 5.0],
+             [1.8, 10.0, 2.0],
+             [-2.0, 1.5, 3.0]]
+        D = [[2.0, 3.0, -1.0],
+             [4.0, 1.0, 2.0],
+             [-2.0, 7.0, 2.0]]
+        C = [[2.0, 3.0, -1.0],
              [4.0, 1.0, 2.0],
              [-2.0, 7.0, 2.0]]
         return A
