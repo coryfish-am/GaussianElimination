@@ -119,11 +119,9 @@ def lu_python(A):
     return unpack(A)
 
 def swap_rows(matrix, row1, row2):
-    """ Swap two rows in a NumPy array """
-    temp = np.copy(matrix[row1, :])
-    matrix[row1, :] = matrix[row2, :]
-    matrix[row2, :] = temp
-    
+    """ Swap two rows in a NumPy array manually """
+    matrix[[row1, row2], :] = matrix[[row2, row1], :]
+
 def plu_python(A):
     n = len(A)
     
@@ -143,7 +141,7 @@ def plu_python(A):
                 max_val = abs(U[i][k])
                 pivot_row = i
         
-        # Step 6: Swap rows in U and P if needed (use manual swap function)
+        # Step 6: Swap rows in U and P if needed
         if pivot_row != k:
             swap_rows(U, k, pivot_row)
             swap_rows(P, k, pivot_row)
@@ -156,7 +154,7 @@ def plu_python(A):
             # Step 11-13: Update the matrix U
             U[i, k+1:n] = U[i, k+1:n] - U[i][k] * U[k, k+1:n]
     
-    # Use the provided unpack function to extract L and U
+    # Convert U to a list of lists at the last moment before passing to unpack
     L, U = unpack(U.tolist())
     
     # Return the permutation matrix P (as a 2D matrix), and matrices L and U
