@@ -1,14 +1,3 @@
-/*----------------------------------------------------------------
-* File:     main.c
-*----------------------------------------------------------------
-*
-* Author:   Marek Rychlik (rychlik@arizona.edu)
-* Date:     Sun Sep 22 10:54:06 2024
-* Copying:  (C) Marek Rychlik, 2020. All rights reserved.
-*
-*----------------------------------------------------------------*/
-/* Driver for gauss_solve.c */
-
 #define _GNU_SOURCE
 
 #include <math.h>

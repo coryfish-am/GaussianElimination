@@ -1,26 +1,9 @@
-#----------------------------------------------------------------
-# File:     gauss_solve.py
-#----------------------------------------------------------------
-#
-# Author:   Marek Rychlik (rychlik@arizona.edu)
-# Date:     Thu Sep 26 10:38:32 2024
-# Copying:  (C) Marek Rychlik, 2020. All rights reserved.
-# 
-#----------------------------------------------------------------
-# A Python wrapper module around the C library libgauss.so
-
 import ctypes
-import numpy as np
 
 gauss_library_path = './libgauss.so'
-
-def P(A):
-    n = len(A)  # Assuming `a` is a square matrix
-    identity = [[1 if i == j else 0 for j in range(n)] for i in range(n)]
-    return identity
     
 def unpack(A):
-    """ Extract L and U parts from A, fill with 0's and 1's """
+    #Extract L and U parts from A, fill with 0's and 1's
     n = len(A)
     
     # Create L and U matrices
@@ -31,7 +14,6 @@ def unpack(A):
     # Fill U with the upper triangular part of A (on and above diagonal)
     for i in range(n):
         for j in range(n):
-            print(f"Processing: A[{i}][{j}] = {A[i][j]}")
             if i > j:
                 L[i][j] = A[i][j]  # Values below diagonal in A are for L
             else:
@@ -118,43 +100,52 @@ def lu_python(A):
 
     return unpack(A)
 
-def swap_rows(matrix, row1, row2):
-    """ Swap two rows in a NumPy array manually """
-    matrix[[row1, row2], :] = matrix[[row2, row1], :]
-
 def plu_python(A):
-    """PA=LU decomposition in pure Python."""
+    # Perform PLU decomposition: PA = LU
     n = len(A)
+    
+    # Initialize permutation vector P and zero matrix L
     P = list(range(n))
     L = [[0.0] * n for _ in range(n)]
-    U = [row[:] for row in A]  # Make a copy of A
+    
+    # Copy of matrix A (which will become U)
+    U = [row[:] for row in A]
 
+    # LU Decomposition with partial pivoting
     for k in range(n - 1):
-        # Find the pivot element
-        pivot_row = max(range(k, n), key=lambda i: abs(U[i][k]))
-        if U[pivot_row][k] == 0:
-            raise ValueError("Matrix is singular and cannot be decomposed.")
+        # Pivot: Find the row with the largest value in column k
+        pivot_row = k
+        max_val = abs(U[k][k])
+        
+        # Searching for the pivot row
+        for i in range(k + 1, n):
+            if abs(U[i][k]) > max_val:
+                max_val = abs(U[i][k])
+                pivot_row = i
 
-        # Swap rows in U, P, and L (only columns 1 to k - 1)
+        # If pivot_row is different, swap the rows in U and P
         if pivot_row != k:
-            # Swap rows in U
             U[k], U[pivot_row] = U[pivot_row], U[k]
-            # Swap entries in permutation vector P
             P[k], P[pivot_row] = P[pivot_row], P[k]
-            # Swap rows in L (only columns 0 to k - 1)
+
+            # Also swap the rows in L for columns before the pivot
             for j in range(k):
                 L[k][j], L[pivot_row][j] = L[pivot_row][j], L[k][j]
 
-        # Eliminate below the pivot
+        # Perform elimination on rows below the pivot
         for i in range(k + 1, n):
-            L[i][k] = U[i][k] / U[k][k]  # Store the multiplier in L
+            # Compute the multiplier and store it in L
+            L[i][k] = U[i][k] / U[k][k]
+
+            # Update the rest of the row in U
             for j in range(k, n):
                 U[i][j] -= L[i][k] * U[k][j]
 
-    # Set the diagonal of L to 1
+    # Set the diagonal elements of L to 1 (by convention)
     for i in range(n):
         L[i][i] = 1.0
 
+    # Return the permutation vector P, the lower matrix L, and the upper matrix U
     return P, L, U
 
 
@@ -177,18 +168,10 @@ if __name__ == "__main__":
 
     def get_A():
         """ Make a test matrix """
-        B = [[2.0, 3.0, -1.0],
+        A = [[2.0, 3.0, -1.0],
              [4.0, 1.0, 2.0],
              [-2.0, 7.0, 2.0]]
-        A = [[-2.0, 3.0, 5.0],
-             [1.8, 10.0, 2.0],
-             [-2.0, 1.5, 3.0]]
-        D = [[2.0, 3.0, -1.0],
-             [4.0, 1.0, 2.0],
-             [-2.0, 7.0, 2.0]]
-        C = [[2.0, 3.0, -1.0],
-             [4.0, 1.0, 2.0],
-             [-2.0, 7.0, 2.0]]
+        
         return A
 
     A = get_A()

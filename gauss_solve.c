@@ -1,12 +1,3 @@
-/*----------------------------------------------------------------
-* File:     gauss_solve.c
-*----------------------------------------------------------------
-*
-* Author:   Marek Rychlik (rychlik@arizona.edu)
-* Date:     Sun Sep 22 15:40:29 2024
-* Copying:  (C) Marek Rychlik, 2020. All rights reserved.
-*
-*----------------------------------------------------------------*/
 #include "gauss_solve.h"
 #include <math.h>
 #include <stdio.h>
